@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Mind Map</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2028; --muted:#5b6472; --line:#c9ced6; --dot:#d9dde3;
+  --root:#22262e; --vuln-bg:#ffffff; --vuln-bd:#8b93a0;
+  --cve-bg:#fff6c2; --cve-bd:#c48a00;
+  --ok-bg:#dcf8e0; --ok-bd:#1a8238; --bad-bg:#fde8ea; --bad-bd:#d1202f;
+  --s0:#1a6fe8; --s1:#7f4fe0; --s2:#bf4f00; --s3:#bf8a00; --s4:#1a8238;
+  --code:#f3f5f8; --shadow:0 6px 24px rgba(20,25,35,.14);
+  --c:#22262e; --cl:#8b93a0; --t:#ffffff;
+}
+.t-servers{--c:#1a6fe8;--cl:#1a6fe8;--t:#e7effd}
+.t-workstations{--c:#7f4fe0;--cl:#7f4fe0;--t:#efe9fc}
+.t-mobile{--c:#1a8238;--cl:#1a8238;--t:#e3f4e6}
+.t-network{--c:#bf4f00;--cl:#bf4f00;--t:#fdeee2}
+.t-ot{--c:#d1202f;--cl:#d1202f;--t:#fde8ea}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#14171c; --panel:#1d2128; --ink:#e7eaef; --muted:#a0a8b5; --line:#3a414c; --dot:#262b33;
+    --root:#2b303a; --vuln-bg:#1d2128; --vuln-bd:#69727f;
+    --cve-bg:#3b3211; --cve-bd:#c9982a;
+    --ok-bg:#12321b; --ok-bd:#3fa55b; --bad-bg:#3c161b; --bad-bd:#e5535f;
+    --code:#12151a; --shadow:0 6px 24px rgba(0,0,0,.5);
+    --cl:#69727f; --t:#1d2128;
+  }
+  .t-servers{--cl:#5a9bff;--t:#182640}
+  .t-workstations{--cl:#a583ff;--t:#251c3f}
+  .t-mobile{--cl:#4fbd6d;--t:#152c1c}
+  .t-network{--cl:#f08a3c;--t:#33200f}
+  .t-ot{--cl:#f2626f;--t:#38151a}
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:14px 20px 8px;flex-wrap:wrap}
+h1{font-size:20px;margin:0}
+.sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+.tools button{font:inherit;font-size:12.5px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;cursor:pointer}
+.tools button:hover{border-color:var(--muted)}
+.tools button:focus-visible,.node:focus-visible{outline:2px solid var(--s0);outline-offset:2px}
+
+.pipeline{display:flex;align-items:center;gap:0;padding:4px 20px 10px;overflow-x:auto}
+.stage{flex:1 1 0;min-width:120px;padding:9px 12px;border-radius:9px;color:#fff;font-weight:700;font-size:12.5px;text-align:center;opacity:.5;transition:opacity .2s, transform .2s, box-shadow .2s}
+.stage.on{opacity:1;transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.stage[data-i="0"]{background:var(--s0)}
+.stage[data-i="1"]{background:var(--s1)}
+.stage[data-i="2"]{background:var(--s2)}
+.stage[data-i="3"]{background:var(--s3)}
+.stage[data-i="4"]{background:var(--s4)}
+.arrow{flex:0 0 22px;text-align:center;color:var(--muted)}
+
+#vp{position:relative;flex:1;min-height:0;overflow:hidden;cursor:grab;touch-action:none;
+  background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:22px 22px;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+#vp.drag{cursor:grabbing}
+#world{position:absolute;left:0;top:0;transform-origin:0 0}
+#links{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
+.link{fill:none;stroke:var(--cl);stroke-width:1.8}
+.link.d1{stroke:var(--line);stroke-width:2}
+#nodes{position:absolute;left:0;top:0}
+
+.node{position:absolute;left:0;top:0;display:flex;align-items:center;justify-content:center;text-align:center;
+  padding:4px 10px;border-radius:10px;border:1.6px solid var(--cl);background:var(--t);color:var(--ink);
+  font:inherit;font-size:12px;line-height:1.25;cursor:pointer;will-change:transform,opacity}
+.node .lbl{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.node.sel{box-shadow:0 0 0 3px color-mix(in srgb,var(--cl) 35%,transparent)}
+.k-root{background:var(--root);color:#fff;border-color:var(--root);font-weight:700;font-size:14px}
+.k-type{background:var(--c);color:#fff;border-color:var(--c);font-weight:700;font-size:13px}
+.k-surface{font-weight:700}
+.k-vuln{background:var(--vuln-bg);border-color:var(--vuln-bd)}
+.k-cve{background:var(--cve-bg);border-color:var(--cve-bd);font-weight:700}
+.k-patch{background:var(--ok-bg);border-color:var(--ok-bd);cursor:default}
+.k-patch.nopatch{background:var(--bad-bg);border-color:var(--bad-bd)}
+.k-planned{background:transparent;border-style:dashed;border-color:var(--line);color:var(--muted)}
+.tog{position:absolute;right:-11px;top:50%;margin-top:-10px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;
+  background:var(--panel);border:1.6px solid var(--cl);color:var(--ink);font:700 11px/17px inherit;font-family:inherit;z-index:2}
+
+.hint{position:absolute;left:14px;bottom:12px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:11.5px;color:var(--muted);
+  background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:8px;padding:6px 10px;max-width:calc(100% - 28px)}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;border:1.5px solid;margin-right:5px;vertical-align:-1px}
+
+#panel{position:absolute;top:0;right:0;bottom:0;width:380px;max-width:100%;background:var(--panel);border-left:1px solid var(--line);
+  box-shadow:var(--shadow);padding:16px 18px 24px;overflow-y:auto;transform:translateX(102%);transition:transform .22s ease;z-index:5;cursor:auto}
+#panel.open{transform:none}
+#panel h2{font-size:16px;margin:0 28px 4px 0}
+#panel h3{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+#panel p{margin:6px 0}
+.x{position:absolute;top:10px;right:12px;border:0;background:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1}
+.kind{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.chain{list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.st{border-left:5px solid var(--sc);background:var(--code);border-radius:6px;padding:6px 10px;opacity:.75}
+.st.cur{opacity:1;outline:1.5px solid var(--sc)}
+.st span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.st b{font-weight:600;font-size:13px}
+.st0{--sc:var(--s0)}.st1{--sc:var(--s1)}.st2{--sc:var(--s2)}.st3{--sc:var(--s3)}.st4{--sc:var(--s4)}
+.callout{border-radius:8px;padding:8px 10px;border:1.5px solid;margin:10px 0;font-size:13px}
+.callout.ok{background:var(--ok-bg);border-color:var(--ok-bd)}
+.callout.bad{background:var(--bad-bg);border-color:var(--bad-bd)}
+.pre{position:relative;margin:6px 0}
+pre{margin:0;background:var(--code);border:1px solid var(--line);border-radius:7px;padding:8px 52px 8px 10px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word}
+.copy{position:absolute;top:5px;right:5px;font:11px inherit;font-family:inherit;padding:2px 7px;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:5px;cursor:pointer}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+td,th{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+td:first-child,th:first-child{font-weight:700;background:var(--code);width:34%}
+ul.list{margin:6px 0;padding-left:18px}
+ul.list li{margin:3px 0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
+.stat{background:var(--code);border-radius:8px;padding:8px 10px}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:11.5px;color:var(--muted)}
+a{color:var(--s0)}
+
+footer{padding:7px 20px;font-size:11.5px;color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);max-width:640px;width:calc(100% - 32px);padding:18px 22px;box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog h2{margin:0 0 6px;font-size:17px}
+
+@media (max-width:700px){
+  #panel{top:auto;width:100%;height:55%;border-left:0;border-top:1px solid var(--line);transform:translateY(102%)}
+  .arrow{flex-basis:12px}
+}
+@media (prefers-reduced-motion:reduce){ #panel{transition:none} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Cybersecurity Consulting Platform: Asset Mind Map</h1>
+    <div class="sub">Click a node to open the next level. Attack surface → vulnerability → CVE → patch.</div>
+  </div>
+  <div class="tools">
+    <button id="expandAll">Expand all</button>
+    <button id="collapseAll">Collapse all</button>
+    <button id="zoomOut" aria-label="Zoom out">−</button>
+    <button id="zoomIn" aria-label="Zoom in">+</button>
+    <button id="fit">Fit</button>
+    <button id="notes">Design notes</button>
+  </div>
+</header>
+
+<nav class="pipeline" aria-label="Pipeline">
+  <div class="stage" data-i="0">1. Asset input</div><div class="arrow">→</div>
+  <div class="stage" data-i="1">2. Attack surface discovery</div><div class="arrow">→</div>
+  <div class="stage" data-i="2">3. Vulnerability identification</div><div class="arrow">→</div>
+  <div class="stage" data-i="3">4. CVE mapping</div><div class="arrow">→</div>
+  <div class="stage" data-i="4">5. Patch / remediation guidance</div>
+</nav>
+
+<main id="vp">
+  <div id="world"><svg id="links" xmlns="http://www.w3.org/2000/svg"></svg><div id="nodes"></div></div>
+  <div class="hint">
+    <span>Drag to pan · Ctrl/⌘ + scroll to zoom</span>
+    <span><i class="sw" style="background:var(--cve-bg);border-color:var(--cve-bd)"></i>CVE</span>
+    <span><i class="sw" style="background:var(--ok-bg);border-color:var(--ok-bd)"></i>Patch available</span>
+    <span><i class="sw" style="background:var(--bad-bg);border-color:var(--bad-bd)"></i>No patch (compensating controls)</span>
+  </div>
+  <aside id="panel" aria-live="polite"></aside>
+</main>
+
+<footer>CVE details and fixed versions should be re-verified against NVD and the vendor advisory before use in a client engagement.</footer>
+
+<dialog id="dlg">
+  <h2>Design notes and open questions</h2>
+  <h3 style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Remediation presentation (for later)</h3>
+  <ul class="list">
+    <li>Rank by risk-adjusted priority: known-exploited (KEV) status weighted over raw CVSS.</li>
+    <li>Each finding as a card: what is affected, why it matters, the fix, effort estimate.</li>
+    <li>Split "patch available" from "no patch yet" (needs compensating controls).</li>
+    <li>Group by remediation owner / root cause, not by host.</li>
+    <li>Track findings across scans over time.</li>
+  </ul>
+  <h3 style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Open design question</h3>
+  <p>Should each attack-surface branch hold a static reference set of common CVEs (a general knowledge tree), or should CVEs populate only once a real scan runs against a real client asset (a live, per-engagement tree)?</p>
+  <table>
+    <tr><td>Static reference tree</td><td>Reusable framework, good for training and scoping, goes stale as new CVEs appear.</td></tr>
+    <tr><td>Live per-engagement tree</td><td>Always current and client-specific, but rebuilt every time.</td></tr>
+    <tr><td>Hybrid (worth considering)</td><td>Static tree for asset types and attack surfaces (they change slowly); CVEs and patches fed live from NVD/vendor data per scan.</td></tr>
+  </table>
+  <h3 style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Next step</h3>
+  <p>Expand the same chain sideways: Workstations, Mobile devices, Network devices, OT / IoT (drafted here), then storage and peripherals.</p>
+  <form method="dialog"><button style="font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer">Close</button></form>
+</dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- data (from asset_mind_map.pdf) ---------- */
+const SUDO = {
+  affected: 'Vulnerable: sudo 1.8.2 to 1.8.31p2 and 1.9.0 to 1.9.5p1. Fixed in 1.9.5p2. Any local user can escalate to root, so it matters most on shared or multi-tenant servers and jump hosts.',
+  detect: 'sudo --version | head -1',
+  patchDeb: 'sudo apt-get update && sudo apt-get install --only-upgrade sudo',
+  patchRhel: 'sudo dnf update sudo',
+  verify: 'apt changelog sudo | grep -i CVE-2021-3156     # Debian/Ubuntu\nrpm -q --changelog sudo | grep CVE-2021-3156   # RHEL family',
+  card: [
+    ['What is affected','Linux servers running sudo in the versions above'],
+    ['Why it matters','Local user to root; useful after any foothold'],
+    ['Fix','Package update (sudo 1.9.5p2+ or vendor backport)'],
+    ['Effort','Low: one package, no reboot'],
+    ['Owner','Linux / platform team']
+  ]
+};
+
+const DATA = [
+  {key:'servers', label:'Servers', surfaces:[
+    {label:'Network-exposed services', chains:[
+      {v:'OpenSSH sshd signal-handler race (regreSSHion)', cve:'CVE-2024-6387', p:'Upgrade to OpenSSH 9.8p1+ (or distro backport)'},
+      {v:'Netlogon crypto flaw lets attacker take over a domain controller (Zerologon)', cve:'CVE-2020-1472', p:'Apply Aug 2020 Windows Server update; enable Netlogon enforcement mode'}]},
+    {label:'Management interfaces (iLO / iDRAC / IPMI / BMC)', chains:[
+      {v:'HPE iLO 4 authentication bypass via oversized Connection header', cve:'CVE-2017-12542', p:'Update iLO 4 firmware to 2.53 or later'},
+      {v:'IPMI 2.0 RAKP leaks password hash to any client', cve:'CVE-2013-4786', np:true, p:'NO PATCH (protocol design). Compensate: isolate BMC VLAN, disable IPMI-over-LAN, long random passwords'}]},
+    {label:'OS and firmware', chains:[
+      {v:'sudo heap overflow gives local root (Baron Samedit)', cve:'CVE-2021-3156', cvss:'7.8', extra:SUDO, p:'Upgrade sudo to 1.9.5p2 or later'},
+      {v:'Secure Boot bypass via Windows boot manager (BlackLotus)', cve:'CVE-2023-24932', p:'Apply May 2023 Windows update, then follow KB5025885 revocation steps'}]},
+    {label:'Physical / local access', chains:[
+      {v:'GRUB2 buffer overflow bypasses Secure Boot (BootHole)', cve:'CVE-2020-10713', p:'Update grub2 and shim; apply UEFI dbx revocation update'}]}
+  ]},
+  {key:'workstations', label:'Workstations', surfaces:[
+    {label:'Office / document handling', chains:[
+      {v:'MSDT remote code execution via Office document (Follina)', cve:'CVE-2022-30190', p:'Apply June 2022 Windows update'},
+      {v:'Outlook leaks NTLM hash via crafted reminder', cve:'CVE-2023-23397', p:'Apply March 2023 Outlook security update'}]},
+    {label:'Web browser', chains:[
+      {v:'libwebp heap buffer overflow via crafted image', cve:'CVE-2023-4863', p:'Update Chrome to 116.0.5845.187+ and other Chromium/libwebp consumers'}]},
+    {label:'Local OS / privilege', chains:[
+      {v:'Print Spooler remote code execution and privilege escalation (PrintNightmare)', cve:'CVE-2021-34527', p:'Apply July 2021 out-of-band update; disable Spooler where not needed'}]},
+    {label:'Removable media / physical', chains:[
+      {v:'Windows shortcut (LNK) file executes code when folder is viewed', cve:'CVE-2010-2568', p:'Apply MS10-046 update'}]}
+  ]},
+  {key:'mobile', label:'Mobile devices', surfaces:[
+    {label:'Messaging / media parsing (zero-click)', chains:[
+      {v:'ImageIO image-parsing flaw exploited via attachment (BLASTPASS)', cve:'CVE-2023-41064', p:'Update to iOS/iPadOS 16.6.1 (or 15.7.9)'}]},
+    {label:'OS kernel', chains:[
+      {v:'Android Binder use-after-free gives root', cve:'CVE-2019-2215', p:'Android Security Bulletin Oct 2019: patch level 2019-10-05 or later'}]},
+    {label:'Wireless (Bluetooth)', chains:[
+      {v:'Android Bluetooth remote code execution (BlueBorne)', cve:'CVE-2017-0781', p:'Android Security Bulletin Sep 2017: patch level 2017-09-01 or later'}]}
+  ]},
+  {key:'network', label:'Network devices', surfaces:[
+    {label:'Remote access / VPN', chains:[
+      {v:'FortiOS SSL-VPN out-of-bounds write', cve:'CVE-2024-21762', p:'Upgrade to fixed FortiOS release per Fortinet PSIRT; interim: disable SSL-VPN'}]},
+    {label:'Management / gateway plane', chains:[
+      {v:'PAN-OS GlobalProtect command injection', cve:'CVE-2024-3400', p:'Apply vendor hotfix (e.g. 10.2.9-h1, 11.0.4-h1, 11.1.2-h3)'}]}
+  ]},
+  {key:'ot', label:'OT / IoT', surfaces:[
+    {label:'Engineering / controller access', chains:[
+      {v:'Rockwell Logix controller authentication key bypass', cve:'CVE-2021-22681', p:'Vendor firmware update / mitigations per Rockwell advisory'}]},
+    {label:'Industrial protocols', chains:[
+      {v:'Modbus/TCP has no authentication by design', cve:'No CVE (design weakness)', nocve:true, np:true, p:'NO PATCH. Compensate: segment per Purdue model, allow-list masters, protocol-aware firewall'}]}
+  ]}
+];
+
+/* ---------- tree ---------- */
+const W = [150,160,220,280,160,300];
+const H = [48,44,50,64,44,64];
+const GAP = 60, SLOT = 74;
+const COLX = []; W.reduce((x,w,i) => (COLX[i]=x, x+w+GAP), 0);
+
+const all = [];
+function mk(kind, label, parent, extra) {
+  const n = Object.assign({kind, label, parent, children:[], depth: parent ? parent.depth+1 : 0, expanded:false,
+    x:0, y:0, tx:0, ty:0, o:0, to:0, el:null, path:null, type: parent ? parent.type : null}, extra);
+  if (parent) parent.children.push(n);
+  all.push(n);
+  return n;
+}
+const root = mk('root', 'Hardware assets', null, {expanded:true});
+DATA.forEach(t => {
+  const tn = mk('type', t.label, root, {type:t.key});
+  t.surfaces.forEach(s => {
+    const sn = mk('surface', s.label, tn);
+    s.chains.forEach(c => {
+      const vn = mk('vuln', c.v, sn, {info:c.extra});
+      const cn = mk('cve', c.cve, vn, {nocve:!!c.nocve, cvss:c.cvss});
+      mk('patch', c.p, cn, {nopatch:!!c.np});
+    });
+  });
+});
+mk('planned', 'Planned expansion', root, {type:'planned'});
+
+const nodesEl = $('#nodes'), linksEl = $('#links'), vp = $('#vp'), world = $('#world'), panel = $('#panel');
+let selected = null;
+
+function create(n) {
+  const el = document.createElement('button');
+  el.className = `node k-${n.kind} t-${n.type || 'root'}` + (n.nopatch ? ' nopatch' : '');
+  el.style.width = W[n.depth] + 'px';
+  el.style.height = H[n.depth] + 'px';
+  el.title = n.label;
+  el.innerHTML = `<span class="lbl">${esc(n.label)}</span>` + (n.children.length ? '<span class="tog"></span>' : '');
+  el.addEventListener('click', () => onNode(n));
+  nodesEl.append(el);
+  n.el = el;
+  if (n.parent) {
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('class', `link t-${n.type || 'root'}` + (n.depth === 1 ? ' d1' : ''));
+    linksEl.append(p);
+    n.path = p;
+    n.x = n.parent.x; n.y = n.parent.y; n.o = 0;
+  }
+  badge(n);
+}
+function badge(n) {
+  if (!n.el) return;
+  const t = n.el.querySelector('.tog');
+  if (!t) return;
+  t.textContent = n.expanded ? '−' : n.children.length;
+  n.el.setAttribute('aria-expanded', n.expanded);
+}
+
+function layout() {
+  let cursor = 0;
+  const vis = new Set();
+  (function place(n) {
+    vis.add(n);
+    n.tx = COLX[n.depth];
+    if (n.expanded && n.children.length) {
+      n.children.forEach(place);
+      n.ty = (n.children[0].ty + n.children[n.children.length-1].ty) / 2;
+      if (n.depth >= 1 && n.depth <= 2) cursor += 16;
+    } else {
+      n.ty = cursor + SLOT/2;
+      cursor += SLOT;
+    }
+  })(root);
+  all.forEach(n => {
+    if (vis.has(n)) {
+      n.to = 1;
+      if (!n.el) create(n);
+      badge(n);
+    } else {
+      n.to = 0;
+      let a = n.parent; while (a && !vis.has(a)) a = a.parent;
+      n.tx = a.tx; n.ty = a.ty;
+    }
+  });
+}
+
+/* ---------- view (pan / zoom) ---------- */
+const view = {x:0, y:0, s:1}, tview = {x:0, y:0, s:1};
+function applyView() { world.style.transform = `translate(${view.x}px,${view.y}px) scale(${view.s})`; }
+
+let raf = 0;
+function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+function frame() {
+  raf = 0;
+  const k = 0.2;
+  let busy = false;
+  for (const n of all) {
+    if (!n.el) continue;
+    n.x += (n.tx - n.x) * k; n.y += (n.ty - n.y) * k; n.o += (n.to - n.o) * k;
+    if (Math.abs(n.tx-n.x) > .4 || Math.abs(n.ty-n.y) > .4 || Math.abs(n.to-n.o) > .02) busy = true;
+    else { n.x = n.tx; n.y = n.ty; n.o = n.to; }
+    if (n.to === 0 && n.o === 0) {
+      n.el.remove(); if (n.path) n.path.remove();
+      n.el = null; n.path = null; continue;
+    }
+    n.el.style.transform = `translate(${n.x}px,${n.y - H[n.depth]/2}px)`;
+    n.el.style.opacity = n.o;
+    if (n.path) {
+      const p = n.parent, sx = p.x + W[p.depth], sy = p.y, ex = n.x, ey = n.y, mx = (sx + ex) / 2;
+      n.path.setAttribute('d', `M${sx},${sy} C${mx},${sy} ${mx},${ey} ${ex},${ey}`);
+      n.path.style.opacity = n.o;
+    }
+  }
+  for (const key of ['x','y','s']) {
+    view[key] += (tview[key] - view[key]) * k;
+    if (Math.abs(tview[key] - view[key]) > (key === 's' ? .002 : .4)) busy = true; else view[key] = tview[key];
+  }
+  applyView();
+  if (busy) kick();
+}
+
+function panelInset() { return panel.classList.contains('open') && innerWidth > 700 ? panel.offsetWidth : 0; }
+function visibleNodes() { return all.filter(n => n.to === 1); }
+function bbox(list) {
+  let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+  list.forEach(n => {
+    a = Math.min(a, n.tx); c = Math.max(c, n.tx + W[n.depth]);
+    b = Math.min(b, n.ty - H[n.depth]/2); d = Math.max(d, n.ty + H[n.depth]/2);
+  });
+  return {x0:a, y0:b, x1:c, y1:d};
+}
+function fit() {
+  const r = vp.getBoundingClientRect(), pad = 40, bb = bbox(visibleNodes());
+  const aw = r.width - panelInset() - pad*2, ah = r.height - pad*2;
+  const s = Math.max(.3, Math.min(aw / (bb.x1-bb.x0), ah / (bb.y1-bb.y0), 1));
+  tview.s = s;
+  tview.x = pad + (aw - (bb.x1-bb.x0)*s) / 2 - bb.x0*s;
+  tview.y = pad + (ah - (bb.y1-bb.y0)*s) / 2 - bb.y0*s;
+  kick();
+}
+function reveal(list) {
+  const r = vp.getBoundingClientRect(), pad = 28, bb = bbox(list), s = tview.s;
+  const right = r.width - panelInset() - pad;
+  let L = tview.x + bb.x0*s, R = tview.x + bb.x1*s, T = tview.y + bb.y0*s, B = tview.y + bb.y1*s;
+  if (R > right) tview.x -= R - right;
+  if (tview.x + bb.x0*s < pad) tview.x += pad - (tview.x + bb.x0*s);
+  if (B > r.height - pad) tview.y -= B - (r.height - pad);
+  if (tview.y + bb.y0*s < pad) tview.y += pad - (tview.y + bb.y0*s);
+}
+function zoomAt(cx, cy, f, instant) {
+  const r = vp.getBoundingClientRect(), s2 = Math.min(2, Math.max(.3, tview.s * f));
+  const px = cx - r.left, py = cy - r.top, wx = (px - tview.x) / tview.s, wy = (py - tview.y) / tview.s;
+  tview.x = px - wx*s2; tview.y = py - wy*s2; tview.s = s2;
+  if (instant) { Object.assign(view, tview); applyView(); } else kick();
+}
+
+vp.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (e.ctrlKey || e.metaKey) zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * .01), true);
+  else { tview.x -= e.deltaX; tview.y -= e.deltaY; Object.assign(view, tview); applyView(); }
+}, {passive:false});
+let drag = null;
+vp.addEventListener('pointerdown', e => {
+  if (e.target.closest('.node, #panel, .hint')) return;
+  drag = {x:e.clientX, y:e.clientY, vx:tview.x, vy:tview.y};
+  vp.setPointerCapture(e.pointerId); vp.classList.add('drag');
+});
+vp.addEventListener('pointermove', e => {
+  if (!drag) return;
+  tview.x = drag.vx + e.clientX - drag.x; tview.y = drag.vy + e.clientY - drag.y;
+  Object.assign(view, tview); applyView();
+});
+const endDrag = () => { drag = null; vp.classList.remove('drag'); };
+vp.addEventListener('pointerup', endDrag); vp.addEventListener('pointercancel', endDrag);
+
+/* ---------- interaction ---------- */
+function subtree(n) { return [n].concat(...n.children.map(subtree)); }
+function collapse(n) { n.expanded = false; n.children.forEach(collapse); }
+
+function onNode(n) {
+  select(n);
+  if (!n.children.length) return;
+  const oldTy = n.ty;
+  if (n.expanded) collapse(n); else n.expanded = true;
+  layout();
+  tview.y -= (n.ty - oldTy) * tview.s;
+  if (n.expanded) reveal(subtree(n).filter(m => m.to === 1));
+  kick();
+}
+$('#expandAll').onclick = () => { all.forEach(n => { if (n.children.length) n.expanded = true; }); layout(); fit(); };
+$('#collapseAll').onclick = () => { root.children.forEach(collapse); root.expanded = true; layout(); fit(); };
+$('#fit').onclick = fit;
+const center = () => { const r = vp.getBoundingClientRect(); return [r.left + (r.width - panelInset())/2, r.top + r.height/2]; };
+$('#zoomIn').onclick = () => zoomAt(...center(), 1.25);
+$('#zoomOut').onclick = () => zoomAt(...center(), 1/1.25);
+$('#notes').onclick = () => $('#dlg').showModal();
+addEventListener('keydown', e => { if (e.key === 'Escape' && panel.classList.contains('open')) closePanel(); });
+
+/* ---------- details panel ---------- */
+const STAGE = [0,0,1,2,3,4];
+function select(n) {
+  if (selected && selected.el) selected.el.classList.remove('sel');
+  selected = n;
+  n.el.classList.add('sel');
+  document.querySelectorAll('.stage').forEach((s, i) => s.classList.toggle('on', i === STAGE[n.depth]));
+  panel.innerHTML = panelHTML(n);
+  panel.scrollTop = 0;
+  panel.classList.add('open');
+}
+function closePanel() {
+  panel.classList.remove('open');
+  if (selected && selected.el) selected.el.classList.remove('sel');
+  selected = null;
+  document.querySelectorAll('.stage').forEach(s => s.classList.remove('on'));
+}
+panel.addEventListener('click', e => {
+  if (e.target.closest('.x')) return closePanel();
+  const b = e.target.closest('.copy');
+  if (b) {
+    const txt = b.parentElement.querySelector('pre').textContent;
+    try { navigator.clipboard.writeText(txt); b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1200); } catch (_) {}
+  }
+});
+
+const code = t => `<div class="pre"><pre>${esc(t)}</pre><button class="copy">Copy</button></div>`;
+const STEP = ['Asset','Attack surface','Vulnerability','CVE','Patch'];
+function chainOf(n) {
+  let v = n; while (v.kind !== 'vuln') v = v.parent;
+  const c = v.children[0], p = c.children[0], s = v.parent, t = s.parent;
+  return [t, s, v, c, p];
+}
+function chainHTML(ch, cur, off = 0) {
+  return '<ol class="chain">' + ch.map((x, i) =>
+    `<li class="st st${i+off}${x === cur ? ' cur' : ''}"><span>${STEP[i+off]}</span><b>${esc(x.label)}</b></li>`).join('') + '</ol>';
+}
+function chainsIn(n) { return subtree(n).filter(m => m.kind === 'patch'); }
+
+function panelHTML(n) {
+  let h = `<button class="x" aria-label="Close">×</button><div class="kind">${{root:'Root',type:'Asset type',surface:'Attack surface',vuln:'Vulnerability',cve:'CVE',patch:'Patch / remediation',planned:'Planned'}[n.kind]}</div>`;
+  h += `<h2>${esc(n.label)}</h2>`;
+  if (n.kind === 'root') {
+    const patches = chainsIn(root);
+    h += `<p>Concept-stage map of the hardware asset tree. Click a node to open the next level; every leaf repeats the same chain: attack surface → vulnerability → CVE → patch.</p>
+      <div class="stats">
+        <div class="stat"><b>${root.children.filter(c => c.kind === 'type').length}</b><span>asset types</span></div>
+        <div class="stat"><b>${all.filter(m => m.kind === 'surface').length}</b><span>attack surfaces</span></div>
+        <div class="stat"><b>${patches.length}</b><span>vulnerability chains</span></div>
+        <div class="stat"><b>${patches.filter(p => p.nopatch).length}</b><span>with no patch (compensating controls)</span></div>
+      </div>`;
+  } else if (n.kind === 'planned') {
+    h += `<p>Later expansion: storage and peripherals, printers, physical security devices. Every leaf repeats the same chain.</p>`;
+  } else if (n.kind === 'type') {
+    h += `<h3>Attack surfaces</h3><ul class="list">` + n.children.map(s =>
+      `<li>${esc(s.label)} <span style="color:var(--muted)">(${s.children.length} chain${s.children.length > 1 ? 's' : ''})</span></li>`).join('') + `</ul>`;
+    const np = chainsIn(n).filter(p => p.nopatch).length;
+    if (np) h += `<div class="callout bad">${np} chain${np > 1 ? 's have' : ' has'} no patch and need${np > 1 ? '' : 's'} compensating controls.</div>`;
+  } else if (n.kind === 'surface') {
+    h += `<h3>${n.children.length} vulnerability chain${n.children.length > 1 ? 's' : ''}</h3>`;
+    n.children.forEach(v => {
+      const c = v.children[0], p = c.children[0];
+      h += chainHTML([v, c, p], null, 2);
+    });
+  } else {
+    const ch = chainOf(n);
+    h += `<h3>Chain</h3>` + chainHTML(ch, n);
+    if (n.kind === 'cve') {
+      if (n.cvss) h += `<p><b>CVSS ${esc(n.cvss)}</b></p>`;
+      if (n.nocve) h += `<p>No CVE assigned: this is a design weakness of the protocol.</p>`;
+      else h += `<p><a href="https://nvd.nist.gov/vuln/detail/${encodeURIComponent(n.label)}" target="_blank" rel="noopener noreferrer">View ${esc(n.label)} on NVD ↗</a></p>`;
+    }
+    if (n.kind === 'patch' || n.kind === 'cve') {
+      const p = ch[4];
+      h += p.nopatch
+        ? `<div class="callout bad"><b>No patch available.</b> Needs compensating controls.</div>`
+        : `<div class="callout ok"><b>Patch available.</b></div>`;
+    }
+    const info = ch[2].info;
+    if (info) {
+      h += `<h3>Affected and fixed versions</h3><p>${esc(info.affected)}</p>
+        <h3>Detect: installed version</h3>${code(info.detect)}
+        <h3>Patch (Debian / Ubuntu)</h3>${code(info.patchDeb)}
+        <h3>Patch (RHEL / Rocky / Alma / Fedora)</h3>${code(info.patchRhel)}
+        <h3>Verify (distros backport fixes, so the version number can look old)</h3>${code(info.verify)}
+        <h3>Finding card</h3><table>${info.card.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</table>`;
+    }
+  }
+  return h;
+}
+
+/* ---------- start ---------- */
+layout();
+all.forEach(n => { if (n.el) { n.x = n.tx; n.y = n.ty; n.o = 1; } });
+fit();
+Object.assign(view, tview);
+kick();
+</script>
+</body>
+</html>
