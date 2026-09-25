@@ -77,6 +77,11 @@ h1{font-size:20px;margin:0}
 .k-vuln{background:var(--vuln-bg);border-color:var(--vuln-bd)}
 .k-cve{background:var(--cve-bg);border-color:var(--cve-bd);font-weight:700}
 .k-patch{background:var(--ok-bg);border-color:var(--ok-bd);cursor:default}
+.k-patch.has-report{cursor:pointer}
+.pdf{position:absolute;right:-8px;top:-9px;padding:1px 6px;border-radius:9px;background:#d1202f;color:#fff;font:700 10px/16px inherit;font-family:inherit;letter-spacing:.04em;z-index:2}
+.report{border:1.5px solid var(--ok-bd);border-radius:8px;padding:10px;margin:10px 0;background:var(--code)}
+.report a.open{display:inline-block;margin:4px 0 8px;font-weight:600}
+.report iframe{width:100%;height:380px;border:1px solid var(--line);border-radius:6px;background:#fff}
 .k-patch.nopatch{background:var(--bad-bg);border-color:var(--bad-bd)}
 .k-planned{background:transparent;border-style:dashed;border-color:var(--line);color:var(--muted)}
 .tog{position:absolute;right:-11px;top:50%;margin-top:-10px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;
@@ -211,7 +216,7 @@ const SUDO = {
 const DATA = [
   {key:'servers', label:'Servers', surfaces:[
     {label:'Network-exposed services', chains:[
-      {v:'OpenSSH sshd signal-handler race (regreSSHion)', cve:'CVE-2024-6387', p:'Upgrade to OpenSSH 9.8p1+ (or distro backport)'},
+      {v:'OpenSSH sshd signal-handler race (regreSSHion)', cve:'CVE-2024-6387', report:'CVE-2024-6387_OpenSSH_Patch_Report.pdf', p:'Upgrade to OpenSSH 9.8p1+ (or distro backport)'},
       {v:'Netlogon crypto flaw lets attacker take over a domain controller (Zerologon)', cve:'CVE-2020-1472', p:'Apply Aug 2020 Windows Server update; enable Netlogon enforcement mode'}]},
     {label:'Management interfaces (iLO / iDRAC / IPMI / BMC)', chains:[
       {v:'HPE iLO 4 authentication bypass via oversized Connection header', cve:'CVE-2017-12542', p:'Update iLO 4 firmware to 2.53 or later'},
@@ -277,7 +282,7 @@ DATA.forEach(t => {
     s.chains.forEach(c => {
       const vn = mk('vuln', c.v, sn, {info:c.extra});
       const cn = mk('cve', c.cve, vn, {nocve:!!c.nocve, cvss:c.cvss});
-      mk('patch', c.p, cn, {nopatch:!!c.np});
+      mk('patch', c.p, cn, {nopatch:!!c.np, report:c.report});
     });
   });
 });
@@ -288,11 +293,11 @@ let selected = null;
 
 function create(n) {
   const el = document.createElement('button');
-  el.className = `node k-${n.kind} t-${n.type || 'root'}` + (n.nopatch ? ' nopatch' : '');
+  el.className = `node k-${n.kind} t-${n.type || 'root'}` + (n.nopatch ? ' nopatch' : '') + (n.report ? ' has-report' : '');
   el.style.width = W[n.depth] + 'px';
   el.style.height = H[n.depth] + 'px';
   el.title = n.label;
-  el.innerHTML = `<span class="lbl">${esc(n.label)}</span>` + (n.children.length ? '<span class="tog"></span>' : '');
+  el.innerHTML = `<span class="lbl">${esc(n.label)}</span>` + (n.children.length ? '<span class="tog"></span>' : '') + (n.report ? '<span class="pdf">PDF</span>' : '');
   el.addEventListener('click', () => onNode(n));
   nodesEl.append(el);
   n.el = el;
@@ -530,6 +535,11 @@ function panelHTML(n) {
       h += p.nopatch
         ? `<div class="callout bad"><b>No patch available.</b> Needs compensating controls.</div>`
         : `<div class="callout ok"><b>Patch available.</b></div>`;
+    }
+    const rp = ch[4].report;
+    if (rp) {
+      const u = encodeURI(rp);
+      h += `<h3>Patch report</h3><div class="report"><b>${esc(rp)}</b><br><a class="open" href="${u}" target="_blank" rel="noopener">Open full report (PDF) ↗</a><iframe src="${u}#view=FitH" title="${esc(rp)}"></iframe></div>`;
     }
     const info = ch[2].info;
     if (info) {
