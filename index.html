@@ -7,89 +7,61 @@
 <style>
 :root{
   --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2028; --muted:#5b6472; --line:#c9ced6; --dot:#d9dde3;
-  --root:#22262e; --vuln-bg:#ffffff; --vuln-bd:#8b93a0;
-  --cve-bg:#fff6c2; --cve-bd:#c48a00;
-  --ok-bg:#dcf8e0; --ok-bd:#1a8238; --bad-bg:#fde8ea; --bad-bd:#d1202f;
-  --s0:#1a6fe8; --s1:#7f4fe0; --s2:#bf4f00; --s3:#bf8a00; --s4:#1a8238;
-  --code:#f3f5f8; --shadow:0 6px 24px rgba(20,25,35,.14);
+  --root:#22262e; --code:#f3f5f8; --shadow:0 6px 24px rgba(20,25,35,.14); --hit:#ffe27a;
   --c:#22262e; --cl:#8b93a0; --t:#ffffff;
 }
-.t-servers{--c:#1a6fe8;--cl:#1a6fe8;--t:#e7effd}
-.t-workstations{--c:#7f4fe0;--cl:#7f4fe0;--t:#efe9fc}
-.t-mobile{--c:#1a8238;--cl:#1a8238;--t:#e3f4e6}
-.t-network{--c:#bf4f00;--cl:#bf4f00;--t:#fdeee2}
-.t-ot{--c:#d1202f;--cl:#d1202f;--t:#fde8ea}
+.t-logical{--c:#1a6fe8;--cl:#1a6fe8;--t:#e7effd}
+.t-physical{--c:#bf4f00;--cl:#bf4f00;--t:#fdeee2}
 @media (prefers-color-scheme:dark){
   :root{
     --bg:#14171c; --panel:#1d2128; --ink:#e7eaef; --muted:#a0a8b5; --line:#3a414c; --dot:#262b33;
-    --root:#2b303a; --vuln-bg:#1d2128; --vuln-bd:#69727f;
-    --cve-bg:#3b3211; --cve-bd:#c9982a;
-    --ok-bg:#12321b; --ok-bd:#3fa55b; --bad-bg:#3c161b; --bad-bd:#e5535f;
-    --code:#12151a; --shadow:0 6px 24px rgba(0,0,0,.5);
+    --root:#2b303a; --code:#12151a; --shadow:0 6px 24px rgba(0,0,0,.5); --hit:#6b5a12;
     --cl:#69727f; --t:#1d2128;
   }
-  .t-servers{--cl:#5a9bff;--t:#182640}
-  .t-workstations{--cl:#a583ff;--t:#251c3f}
-  .t-mobile{--cl:#4fbd6d;--t:#152c1c}
-  .t-network{--cl:#f08a3c;--t:#33200f}
-  .t-ot{--cl:#f2626f;--t:#38151a}
+  .t-logical{--cl:#5a9bff;--t:#182640}
+  .t-physical{--cl:#f08a3c;--t:#33200f}
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden}
 
-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:14px 20px 8px;flex-wrap:wrap}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px 16px;padding:14px 20px 10px;flex-wrap:wrap}
 h1{font-size:20px;margin:0}
 .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
-.tools{display:flex;gap:6px;flex-wrap:wrap}
-.tools button{font:inherit;font-size:12.5px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;cursor:pointer}
+.tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tools button,.tools input{font:inherit;font-size:12.5px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px}
+.tools button{cursor:pointer}
+.tools input{width:200px;max-width:100%}
 .tools button:hover{border-color:var(--muted)}
-.tools button:focus-visible,.node:focus-visible{outline:2px solid var(--s0);outline-offset:2px}
-
-.pipeline{display:flex;align-items:center;gap:0;padding:4px 20px 10px;overflow-x:auto}
-.stage{flex:1 1 0;min-width:120px;padding:9px 12px;border-radius:9px;color:#fff;font-weight:700;font-size:12.5px;text-align:center;opacity:.5;transition:opacity .2s, transform .2s, box-shadow .2s}
-.stage.on{opacity:1;transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.25)}
-.stage[data-i="0"]{background:var(--s0)}
-.stage[data-i="1"]{background:var(--s1)}
-.stage[data-i="2"]{background:var(--s2)}
-.stage[data-i="3"]{background:var(--s3)}
-.stage[data-i="4"]{background:var(--s4)}
-.arrow{flex:0 0 22px;text-align:center;color:var(--muted)}
+.tools button:focus-visible,.tools input:focus-visible,.node:focus-visible{outline:2px solid #1a6fe8;outline-offset:2px}
+#count{font-size:12px;color:var(--muted);min-width:70px}
 
 #vp{position:relative;flex:1;min-height:0;overflow:hidden;cursor:grab;touch-action:none;
   background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:22px 22px;
-  border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  border-top:1px solid var(--line)}
 #vp.drag{cursor:grabbing}
 #world{position:absolute;left:0;top:0;transform-origin:0 0}
 #links{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
 .link{fill:none;stroke:var(--cl);stroke-width:1.8}
-.link.d1{stroke:var(--line);stroke-width:2}
+.link.d1{stroke-width:2.4}
 #nodes{position:absolute;left:0;top:0}
 
 .node{position:absolute;left:0;top:0;display:flex;align-items:center;justify-content:center;text-align:center;
   padding:4px 10px;border-radius:10px;border:1.6px solid var(--cl);background:var(--t);color:var(--ink);
   font:inherit;font-size:12px;line-height:1.25;cursor:pointer;will-change:transform,opacity}
-.node .lbl{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.node .lbl{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .node.sel{box-shadow:0 0 0 3px color-mix(in srgb,var(--cl) 35%,transparent)}
+.node.hit{background:var(--hit)}
 .k-root{background:var(--root);color:#fff;border-color:var(--root);font-weight:700;font-size:14px}
-.k-type{background:var(--c);color:#fff;border-color:var(--c);font-weight:700;font-size:13px}
-.k-surface{font-weight:700}
-.k-vuln{background:var(--vuln-bg);border-color:var(--vuln-bd)}
-.k-cve{background:var(--cve-bg);border-color:var(--cve-bd);font-weight:700}
-.k-patch{background:var(--ok-bg);border-color:var(--ok-bd);cursor:default}
-.k-patch.has-report{cursor:pointer}
-.pdf{position:absolute;right:-8px;top:-9px;padding:1px 6px;border-radius:9px;background:#d1202f;color:#fff;font:700 10px/16px inherit;font-family:inherit;letter-spacing:.04em;z-index:2}
-.report{border:1.5px solid var(--ok-bd);border-radius:8px;padding:10px;margin:10px 0;background:var(--code)}
-.report a.open{display:inline-block;margin:4px 0 8px;font-weight:600}
-.report iframe{width:100%;height:380px;border:1px solid var(--line);border-radius:6px;background:#fff}
-.k-patch.nopatch{background:var(--bad-bg);border-color:var(--bad-bd)}
-.k-planned{background:transparent;border-style:dashed;border-color:var(--line);color:var(--muted)}
+.k-layer{background:var(--c);color:#fff;border-color:var(--c);font-weight:700;font-size:14px}
+.k-cat{font-weight:700}
+.k-asset{justify-content:flex-start;text-align:left;border-radius:8px}
 .tog{position:absolute;right:-11px;top:50%;margin-top:-10px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;
   background:var(--panel);border:1.6px solid var(--cl);color:var(--ink);font:700 11px/17px inherit;font-family:inherit;z-index:2}
 
 .hint{position:absolute;left:14px;bottom:12px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:11.5px;color:var(--muted);
   background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:8px;padding:6px 10px;max-width:calc(100% - 28px)}
-.sw{display:inline-block;width:11px;height:11px;border-radius:3px;border:1.5px solid;margin-right:5px;vertical-align:-1px}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 
 #panel{position:absolute;top:0;right:0;bottom:0;width:380px;max-width:100%;background:var(--panel);border-left:1px solid var(--line);
   box-shadow:var(--shadow);padding:16px 18px 24px;overflow-y:auto;transform:translateX(102%);transition:transform .22s ease;z-index:5;cursor:auto}
@@ -99,37 +71,23 @@ h1{font-size:20px;margin:0}
 #panel p{margin:6px 0}
 .x{position:absolute;top:10px;right:12px;border:0;background:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1}
 .kind{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.chain{list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:6px}
-.st{border-left:5px solid var(--sc);background:var(--code);border-radius:6px;padding:6px 10px;opacity:.75}
-.st.cur{opacity:1;outline:1.5px solid var(--sc)}
-.st span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.st b{font-weight:600;font-size:13px}
-.st0{--sc:var(--s0)}.st1{--sc:var(--s1)}.st2{--sc:var(--s2)}.st3{--sc:var(--s3)}.st4{--sc:var(--s4)}
-.callout{border-radius:8px;padding:8px 10px;border:1.5px solid;margin:10px 0;font-size:13px}
-.callout.ok{background:var(--ok-bg);border-color:var(--ok-bd)}
-.callout.bad{background:var(--bad-bg);border-color:var(--bad-bd)}
-.pre{position:relative;margin:6px 0}
-pre{margin:0;background:var(--code);border:1px solid var(--line);border-radius:7px;padding:8px 52px 8px 10px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word}
-.copy{position:absolute;top:5px;right:5px;font:11px inherit;font-family:inherit;padding:2px 7px;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:5px;cursor:pointer}
-table{border-collapse:collapse;width:100%;font-size:12.5px}
-td,th{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
-td:first-child,th:first-child{font-weight:700;background:var(--code);width:34%}
+.crumb{font-size:12.5px;color:var(--muted);margin:2px 0 8px}
 ul.list{margin:6px 0;padding-left:18px}
 ul.list li{margin:3px 0}
+ul.list .n{color:var(--muted)}
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
 .stat{background:var(--code);border-radius:8px;padding:8px 10px}
-.stat b{display:block;font-size:20px}
+.stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
 .stat span{font-size:11.5px;color:var(--muted)}
-a{color:var(--s0)}
+.tag{display:inline-block;font-size:11.5px;background:var(--code);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
 
-footer{padding:7px 20px;font-size:11.5px;color:var(--muted)}
-dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);max-width:640px;width:calc(100% - 32px);padding:18px 22px;box-shadow:var(--shadow)}
-dialog::backdrop{background:rgba(0,0,0,.4)}
-dialog h2{margin:0 0 6px;font-size:17px}
+footer{padding:7px 20px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--line)}
 
 @media (max-width:700px){
+  header{padding:12px 16px 8px}
+  .tools input{width:100%}
   #panel{top:auto;width:100%;height:55%;border-left:0;border-top:1px solid var(--line);transform:translateY(102%)}
-  .arrow{flex-basis:12px}
+  footer{padding:7px 16px}
 }
 @media (prefers-reduced-motion:reduce){ #panel{transition:none} }
 </style>
@@ -137,133 +95,766 @@ dialog h2{margin:0 0 6px;font-size:17px}
 <body>
 <header>
   <div>
-    <h1>Cybersecurity Consulting Platform: Asset Mind Map</h1>
-    <div class="sub">Click a node to open the next level. Attack surface → vulnerability → CVE → patch.</div>
+    <h1>Asset Mind Map</h1>
+    <div class="sub">Click a node to open the next level: Logical / Physical → category → asset type.</div>
   </div>
   <div class="tools">
+    <input id="q" type="search" placeholder="Search assets…" aria-label="Search assets">
+    <span id="count" aria-live="polite"></span>
     <button id="expandAll">Expand all</button>
     <button id="collapseAll">Collapse all</button>
     <button id="zoomOut" aria-label="Zoom out">−</button>
     <button id="zoomIn" aria-label="Zoom in">+</button>
     <button id="fit">Fit</button>
-    <button id="notes">Design notes</button>
   </div>
 </header>
-
-<nav class="pipeline" aria-label="Pipeline">
-  <div class="stage" data-i="0">1. Asset input</div><div class="arrow">→</div>
-  <div class="stage" data-i="1">2. Attack surface discovery</div><div class="arrow">→</div>
-  <div class="stage" data-i="2">3. Vulnerability identification</div><div class="arrow">→</div>
-  <div class="stage" data-i="3">4. CVE mapping</div><div class="arrow">→</div>
-  <div class="stage" data-i="4">5. Patch / remediation guidance</div>
-</nav>
 
 <main id="vp">
   <div id="world"><svg id="links" xmlns="http://www.w3.org/2000/svg"></svg><div id="nodes"></div></div>
   <div class="hint">
     <span>Drag to pan · Ctrl/⌘ + scroll to zoom</span>
-    <span><i class="sw" style="background:var(--cve-bg);border-color:var(--cve-bd)"></i>CVE</span>
-    <span><i class="sw" style="background:var(--ok-bg);border-color:var(--ok-bd)"></i>Patch available</span>
-    <span><i class="sw" style="background:var(--bad-bg);border-color:var(--bad-bd)"></i>No patch (compensating controls)</span>
+    <span><i class="sw" style="background:#1a6fe8"></i>Logical</span>
+    <span><i class="sw" style="background:#bf4f00"></i>Physical</span>
   </div>
   <aside id="panel" aria-live="polite"></aside>
 </main>
 
-<footer>CVE details and fixed versions should be re-verified against NVD and the vendor advisory before use in a client engagement.</footer>
-
-<dialog id="dlg">
-  <h2>Design notes and open questions</h2>
-  <h3 style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Remediation presentation (for later)</h3>
-  <ul class="list">
-    <li>Rank by risk-adjusted priority: known-exploited (KEV) status weighted over raw CVSS.</li>
-    <li>Each finding as a card: what is affected, why it matters, the fix, effort estimate.</li>
-    <li>Split "patch available" from "no patch yet" (needs compensating controls).</li>
-    <li>Group by remediation owner / root cause, not by host.</li>
-    <li>Track findings across scans over time.</li>
-  </ul>
-  <h3 style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Open design question</h3>
-  <p>Should each attack-surface branch hold a static reference set of common CVEs (a general knowledge tree), or should CVEs populate only once a real scan runs against a real client asset (a live, per-engagement tree)?</p>
-  <table>
-    <tr><td>Static reference tree</td><td>Reusable framework, good for training and scoping, goes stale as new CVEs appear.</td></tr>
-    <tr><td>Live per-engagement tree</td><td>Always current and client-specific, but rebuilt every time.</td></tr>
-    <tr><td>Hybrid (worth considering)</td><td>Static tree for asset types and attack surfaces (they change slowly); CVEs and patches fed live from NVD/vendor data per scan.</td></tr>
-  </table>
-  <h3 style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Next step</h3>
-  <p>Expand the same chain sideways: Workstations, Mobile devices, Network devices, OT / IoT (drafted here), then storage and peripherals.</p>
-  <form method="dialog"><button style="font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer">Close</button></form>
-</dialog>
+<footer>Source: asset category final.xlsx (Categories and Asset_Types sheets).</footer>
 
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-/* ---------- data (from asset_mind_map.pdf) ---------- */
-const SUDO = {
-  affected: 'Vulnerable: sudo 1.8.2 to 1.8.31p2 and 1.9.0 to 1.9.5p1. Fixed in 1.9.5p2. Any local user can escalate to root, so it matters most on shared or multi-tenant servers and jump hosts.',
-  detect: 'sudo --version | head -1',
-  patchDeb: 'sudo apt-get update && sudo apt-get install --only-upgrade sudo',
-  patchRhel: 'sudo dnf update sudo',
-  verify: 'apt changelog sudo | grep -i CVE-2021-3156     # Debian/Ubuntu\nrpm -q --changelog sudo | grep CVE-2021-3156   # RHEL family',
-  card: [
-    ['What is affected','Linux servers running sudo in the versions above'],
-    ['Why it matters','Local user to root; useful after any foothold'],
-    ['Fix','Package update (sudo 1.9.5p2+ or vendor backport)'],
-    ['Effort','Low: one package, no reboot'],
-    ['Owner','Linux / platform team']
-  ]
-};
-
+/* ---------- data (from asset category final.xlsx) ---------- */
 const DATA = [
-  {key:'servers', label:'Servers', surfaces:[
-    {label:'Network-exposed services', chains:[
-      {v:'OpenSSH sshd signal-handler race (regreSSHion)', cve:'CVE-2024-6387', report:'CVE-2024-6387_OpenSSH_Patch_Report.pdf', p:'Upgrade to OpenSSH 9.8p1+ (or distro backport)'},
-      {v:'Netlogon crypto flaw lets attacker take over a domain controller (Zerologon)', cve:'CVE-2020-1472', p:'Apply Aug 2020 Windows Server update; enable Netlogon enforcement mode'}]},
-    {label:'Management interfaces (iLO / iDRAC / IPMI / BMC)', chains:[
-      {v:'HPE iLO 4 authentication bypass via oversized Connection header', cve:'CVE-2017-12542', p:'Update iLO 4 firmware to 2.53 or later'},
-      {v:'IPMI 2.0 RAKP leaks password hash to any client', cve:'CVE-2013-4786', np:true, p:'NO PATCH (protocol design). Compensate: isolate BMC VLAN, disable IPMI-over-LAN, long random passwords'}]},
-    {label:'OS and firmware', chains:[
-      {v:'sudo heap overflow gives local root (Baron Samedit)', cve:'CVE-2021-3156', cvss:'7.8', extra:SUDO, p:'Upgrade sudo to 1.9.5p2 or later'},
-      {v:'Secure Boot bypass via Windows boot manager (BlackLotus)', cve:'CVE-2023-24932', p:'Apply May 2023 Windows update, then follow KB5025885 revocation steps'}]},
-    {label:'Physical / local access', chains:[
-      {v:'GRUB2 buffer overflow bypasses Secure Boot (BootHole)', cve:'CVE-2020-10713', p:'Update grub2 and shim; apply UEFI dbx revocation update'}]}
-  ]},
-  {key:'workstations', label:'Workstations', surfaces:[
-    {label:'Office / document handling', chains:[
-      {v:'MSDT remote code execution via Office document (Follina)', cve:'CVE-2022-30190', p:'Apply June 2022 Windows update'},
-      {v:'Outlook leaks NTLM hash via crafted reminder', cve:'CVE-2023-23397', p:'Apply March 2023 Outlook security update'}]},
-    {label:'Web browser', chains:[
-      {v:'libwebp heap buffer overflow via crafted image', cve:'CVE-2023-4863', p:'Update Chrome to 116.0.5845.187+ and other Chromium/libwebp consumers'}]},
-    {label:'Local OS / privilege', chains:[
-      {v:'Print Spooler remote code execution and privilege escalation (PrintNightmare)', cve:'CVE-2021-34527', p:'Apply July 2021 out-of-band update; disable Spooler where not needed'}]},
-    {label:'Removable media / physical', chains:[
-      {v:'Windows shortcut (LNK) file executes code when folder is viewed', cve:'CVE-2010-2568', p:'Apply MS10-046 update'}]}
-  ]},
-  {key:'mobile', label:'Mobile devices', surfaces:[
-    {label:'Messaging / media parsing (zero-click)', chains:[
-      {v:'ImageIO image-parsing flaw exploited via attachment (BLASTPASS)', cve:'CVE-2023-41064', p:'Update to iOS/iPadOS 16.6.1 (or 15.7.9)'}]},
-    {label:'OS kernel', chains:[
-      {v:'Android Binder use-after-free gives root', cve:'CVE-2019-2215', p:'Android Security Bulletin Oct 2019: patch level 2019-10-05 or later'}]},
-    {label:'Wireless (Bluetooth)', chains:[
-      {v:'Android Bluetooth remote code execution (BlueBorne)', cve:'CVE-2017-0781', p:'Android Security Bulletin Sep 2017: patch level 2017-09-01 or later'}]}
-  ]},
-  {key:'network', label:'Network devices', surfaces:[
-    {label:'Remote access / VPN', chains:[
-      {v:'FortiOS SSL-VPN out-of-bounds write', cve:'CVE-2024-21762', p:'Upgrade to fixed FortiOS release per Fortinet PSIRT; interim: disable SSL-VPN'}]},
-    {label:'Management / gateway plane', chains:[
-      {v:'PAN-OS GlobalProtect command injection', cve:'CVE-2024-3400', p:'Apply vendor hotfix (e.g. 10.2.9-h1, 11.0.4-h1, 11.1.2-h3)'}]}
-  ]},
-  {key:'ot', label:'OT / IoT', surfaces:[
-    {label:'Engineering / controller access', chains:[
-      {v:'Rockwell Logix controller authentication key bypass', cve:'CVE-2021-22681', p:'Vendor firmware update / mitigations per Rockwell advisory'}]},
-    {label:'Industrial protocols', chains:[
-      {v:'Modbus/TCP has no authentication by design', cve:'No CVE (design weakness)', nocve:true, np:true, p:'NO PATCH. Compensate: segment per Purdue model, allow-list masters, protocol-aware firewall'}]}
-  ]}
+ {
+  "layer": "Logical",
+  "cats": [
+   {
+    "id": 1,
+    "name": "Server hardware",
+    "group": "A. Owned hardware",
+    "ex": "Rack, tower, blade servers, hyper-converged nodes",
+    "assets": [
+     "Server firmware and BMC (iLO / iDRAC)",
+     "Hypervisor",
+     "Virtual machine",
+     "Server operating system",
+     "Directory service (Active Directory)",
+     "DNS / DHCP service",
+     "Web / application server",
+     "Database (DBMS)",
+     "Email server",
+     "File share",
+     "Container platform (Docker / Kubernetes)",
+     "Backup software",
+     "Security management server (SIEM, patch, EDR console)",
+     "Virtualisation management server (vCenter, SCVMM)",
+     "Virtual cluster / resource pool",
+     "VM template / VM image / snapshot",
+     "Virtual desktop (VDI / cloud VDI)",
+     "Application virtualisation / remote app host",
+     "Operating system image / golden image",
+     "Device driver",
+     "Operating system patch / update / hotfix",
+     "Message queue / event streaming platform (Kafka, RabbitMQ, MQ)",
+     "Middleware / enterprise service bus",
+     "Managed file transfer (FTP / SFTP) server",
+     "ERP / CRM business system (SAP, Dynamics, Salesforce)",
+     "Collaboration platform (SharePoint, Teams, Slack)",
+     "Database schema / table / view",
+     "NoSQL / document database",
+     "In-memory data store / cache",
+     "Data warehouse",
+     "Data lake / lakehouse",
+     "Search engine / index",
+     "Time-series / graph / vector database",
+     "Big-data cluster (Hadoop, Spark)",
+     "ETL / data pipeline",
+     "Stored procedure / database job",
+     "Container image",
+     "Container registry",
+     "Kubernetes workload (pod, deployment, daemonset, statefulset)",
+     "Kubernetes service / ingress / service mesh",
+     "Kubernetes persistent volume",
+     "Helm chart / Kubernetes operator",
+     "Serverless function",
+     "Failover / high-availability cluster",
+     "Scheduled / cron / batch job",
+     "Script / macro / automation (PowerShell, Python)"
+    ]
+   },
+   {
+    "id": 2,
+    "name": "End-user computers",
+    "group": "A. Owned hardware",
+    "ex": "Desktops, laptops, thin clients, kiosks",
+    "assets": [
+     "Endpoint firmware (BIOS / UEFI)",
+     "Client operating system",
+     "Productivity suite (Office)",
+     "Web browser and extensions",
+     "Email client",
+     "Business application (client-side)",
+     "VPN client",
+     "EDR / antivirus agent",
+     "Remote-access tool (AnyDesk, TeamViewer)",
+     "Installed commercial software",
+     "Open-source software component",
+     "Software package / installer",
+     "Software version / build / release",
+     "Software licence key / activation key",
+     "Spreadsheet / end-user computing application (macros)",
+     "Endpoint management agent (RMM, patch agent)",
+     "Device compliance policy",
+     "Group Policy Object (GPO) / device policy"
+    ]
+   },
+   {
+    "id": 3,
+    "name": "Mobile devices",
+    "group": "A. Owned hardware",
+    "ex": "Company phones, tablets, BYOD",
+    "assets": [
+     "Mobile operating system",
+     "Mobile app",
+     "MDM enrolment / profile",
+     "MFA authenticator app",
+     "Mobile device managed app / app protection policy",
+     "Mobile app store listing / app package",
+     "Telecom data plan / mobile subscription",
+     "Phone number / SMS short code"
+    ]
+   },
+   {
+    "id": 4,
+    "name": "Network hardware",
+    "group": "A. Owned hardware",
+    "ex": "Routers, switches, hardware load balancers",
+    "assets": [
+     "Network OS / firmware",
+     "Network device configuration (routing, VLANs, ACLs)",
+     "Network management services (SSH, SNMP, web)",
+     "Load balancer (function)",
+     "Virtual network (VPC / VNet)",
+     "Subnet / VLAN / VXLAN",
+     "Virtual router / route table / routing policy",
+     "Virtual switch / distributed virtual switch",
+     "Virtual NIC / cloud network interface",
+     "Transit gateway / VPC peering / private link / endpoint",
+     "NAT gateway / internet gateway / egress gateway",
+     "SD-WAN policy / overlay / fabric",
+     "Software-defined network (SDN) controller / policy",
+     "Network segment / security zone",
+     "Internet service provider circuit / WAN link / MPLS / leased line",
+     "Network access control (NAC) policy",
+     "Content delivery network (CDN) distribution",
+     "API gateway / API route"
+    ]
+   },
+   {
+    "id": 5,
+    "name": "Security appliance hardware",
+    "group": "A. Owned hardware",
+    "ex": "Dedicated firewall / IPS / VPN / proxy / WAF boxes",
+    "assets": [
+     "Security appliance firmware and admin console",
+     "Firewall (function)",
+     "IDS / IPS (function)",
+     "VPN service (function)",
+     "Web proxy / secure web gateway (function)",
+     "Web application firewall (function)",
+     "Firewall rule / security policy / rule set",
+     "Network security group / security group rule / network ACL",
+     "Virtual / cloud firewall",
+     "Zero trust network access (ZTNA) policy / connector",
+     "Secure access service edge (SASE / SSE) service",
+     "Cloud access security broker (CASB) policy",
+     "Email security gateway / policy",
+     "DDoS protection plan",
+     "SIEM detection / correlation / alert rule",
+     "SOAR playbook",
+     "Log source / log collector / forwarder",
+     "Threat intelligence feed / indicator of compromise (IOC)",
+     "Vulnerability scanner / scan template",
+     "Vulnerability / CVE record and scan result",
+     "Exposure / misconfiguration finding",
+     "Penetration test finding / report",
+     "Cloud / data / SaaS security posture tool (CSPM, DSPM, SSPM, CNAPP)",
+     "Security baseline / hardening benchmark",
+     "Deception asset (honeypot, honeytoken, honey account)",
+     "Hardware security module key / partition (logical)"
+    ]
+   },
+   {
+    "id": 6,
+    "name": "Wireless hardware",
+    "group": "A. Owned hardware",
+    "ex": "Access points, wireless controllers",
+    "assets": [
+     "Wireless controller / AP firmware",
+     "SSID and wireless authentication",
+     "Captive portal",
+     "Wi-Fi guest network",
+     "Bluetooth / NFC / Zigbee / LoRaWAN network",
+     "Wireless network policy / RF profile"
+    ]
+   },
+   {
+    "id": 7,
+    "name": "Storage hardware",
+    "group": "A. Owned hardware",
+    "ex": "NAS, SAN, tape libraries, backup appliances",
+    "assets": [
+     "Storage OS / firmware and management",
+     "Share / LUN",
+     "Backup set / snapshot",
+     "Storage pool / RAID group / volume group",
+     "Cloud block storage volume",
+     "Cloud file storage (EFS, Azure Files, FSx)",
+     "Cloud archive vault / cold storage",
+     "Storage gateway / virtual storage appliance",
+     "Backup policy / schedule / plan",
+     "Replication job",
+     "Archive / retention repository"
+    ]
+   },
+   {
+    "id": 8,
+    "name": "Printers and MFPs",
+    "group": "A. Owned hardware",
+    "ex": "Printers, multifunction devices, scanners",
+    "assets": [
+     "Printer firmware and web admin",
+     "Scan-to-email / scan-to-folder",
+     "Stored print jobs",
+     "Print server / print queue"
+    ]
+   },
+   {
+    "id": 9,
+    "name": "Communication hardware",
+    "group": "A. Owned hardware",
+    "ex": "IP phones, PBX / voice gateways, conferencing units",
+    "assets": [
+     "Phone / conferencing firmware",
+     "PBX / call manager (function)",
+     "SIP trunk",
+     "Voicemail",
+     "Contact centre / call queue / IVR configuration",
+     "Video-conferencing account / meeting room resource",
+     "Unified communications service"
+    ]
+   },
+   {
+    "id": 10,
+    "name": "IoT and OT hardware",
+    "group": "A. Owned hardware",
+    "ex": "IP cameras, NVR boxes, badge readers, HVAC, PLCs, smart TVs",
+    "assets": [
+     "IoT device firmware",
+     "Video management / NVR (function)",
+     "Access-control software (function)",
+     "SCADA / HMI",
+     "IoT platform / device registry / fleet",
+     "IoT device identity / digital twin / device certificate",
+     "IoT / OT firmware update package",
+     "PLC program / control logic project",
+     "HMI screen / project file",
+     "OT network zone / conduit (Purdue level)",
+     "OT historian software",
+     "Engineering software (vendor tools)",
+     "Industrial protocol / process data tag",
+     "Medical software (PACS, EHR/EMR, lab system)",
+     "Building management system software"
+    ]
+   },
+   {
+    "id": 11,
+    "name": "Facility hardware",
+    "group": "A. Owned hardware",
+    "ex": "UPS, smart PDUs, environmental sensors",
+    "assets": [
+     "UPS / PDU network management card",
+     "Environmental monitoring / DCIM software"
+    ]
+   },
+   {
+    "id": 12,
+    "name": "Removable media",
+    "group": "A. Owned hardware",
+    "ex": "USB drives, external disks, backup tapes",
+    "assets": [
+     "Data on removable media"
+    ]
+   },
+   {
+    "id": 13,
+    "name": "Cloud and colocation",
+    "group": "B. Hardware owned by others",
+    "ex": "Provider-hosted IaaS, PaaS, SaaS",
+    "assets": [
+     "Cloud VM (IaaS)",
+     "Managed database (PaaS)",
+     "SaaS application",
+     "Cloud storage bucket",
+     "Cloud tenant / admin console",
+     "API key / secret",
+     "Cloud account / subscription / project / compartment",
+     "Cloud organisation / management group",
+     "Cloud resource group / folder",
+     "Cloud region / availability zone",
+     "Landing zone / cloud guardrail / blueprint",
+     "Cloud resource tag / label",
+     "Instance scale set / auto-scaling group",
+     "Dedicated host / reserved capacity",
+     "Platform-as-a-service (PaaS) application",
+     "Serverless workflow / state machine",
+     "Cloud batch / HPC job",
+     "Cloud load balancer",
+     "Cloud identity and access (IAM) policy / role",
+     "Cloud key management service (KMS) key",
+     "Cloud secrets manager entry",
+     "Cloud audit trail / logging configuration",
+     "Cloud billing / budget / cost allocation entity",
+     "Cloud marketplace subscription",
+     "Capacity reservation / reserved instance / savings plan",
+     "Shadow IT / unsanctioned SaaS application",
+     "SaaS integration / OAuth app connection",
+     "Cloud web application firewall rule / bot protection rule",
+     "Third-party / managed service provider (MSP) connection"
+    ]
+   },
+   {
+    "id": 14,
+    "name": "Cross-cutting logical assets",
+    "group": "C. Not tied to one device",
+    "ex": "Accounts, data, domains, certificates, keys",
+    "assets": [
+     "User account",
+     "Privileged / admin account",
+     "Service account",
+     "Data set / information",
+     "Domain name and DNS records",
+     "SSL / TLS certificate",
+     "Public IP range",
+     "Software licence",
+     "Encryption key",
+     "Guest / external (B2B / B2C) identity",
+     "Contractor / vendor account",
+     "Shared / generic / break-glass account",
+     "Application / SaaS account",
+     "Machine identity",
+     "Non-human identity (bot, agent identity)",
+     "Managed identity (system- and user-assigned)",
+     "Application registration / service principal / enterprise application",
+     "OAuth token / grant / consent / scope",
+     "Session token / refresh token / JWT",
+     "Password / credential vault entry",
+     "Secret (application secret / connection string)",
+     "SSH key / key pair",
+     "Certificate authority (CA) / PKI hierarchy",
+     "Certificate revocation list (CRL) / OCSP responder",
+     "Multi-factor authentication method / passkey",
+     "Role / role assignment",
+     "Group (security, distribution, dynamic)",
+     "Permission / entitlement / access right",
+     "Access control list (ACL)",
+     "Access policy (RBAC, ABAC, conditional access)",
+     "Identity provider (IdP) / SSO configuration",
+     "Federation trust / SAML / OIDC provider",
+     "Active Directory domain / forest / organisational unit (OU)",
+     "Identity governance / access review / lifecycle workflow",
+     "Privileged access management (PAM) vault / session",
+     "Structured data (records, tables)",
+     "Unstructured data (documents, email, images, video)",
+     "Sensitive / regulated data (PII, PHI, PCI)",
+     "Intellectual property / trade secrets / source code",
+     "Customer data / employee (HR) records",
+     "Financial / accounting data",
+     "Log data / telemetry / audit trail",
+     "Data classification / sensitivity label",
+     "Data retention policy",
+     "Data loss prevention (DLP) policy / rule",
+     "Data catalogue / metadata repository",
+     "Data stream / event hub",
+     "Master / reference data",
+     "Data model / data dictionary",
+     "Individual IP address (public / elastic / private)",
+     "Autonomous system number (ASN)",
+     "IP address management (IPAM) record",
+     "MAC address",
+     "Subdomain / hostname / FQDN",
+     "WHOIS / domain registrar record",
+     "Website / web property",
+     "URL / endpoint / API endpoint",
+     "Open port / network service / listening service",
+     "Email address / shared mailbox",
+     "Email authentication records (SPF, DKIM, DMARC)",
+     "Social media account / brand handle",
+     "Custom / in-house developed application",
+     "Legacy / mainframe application",
+     "Web application",
+     "Web service / API",
+     "Microservice",
+     "Business service / application service / technology service",
+     "Service catalogue item / service offering",
+     "Service dependency map / application dependency",
+     "Configuration item (CI) / CI relationship",
+     "Configuration baseline",
+     "Dataset / data product",
+     "Blockchain node / smart contract / digital wallet",
+     "Cryptocurrency / digital token / NFT held by the organisation",
+     "Verifiable / digital identity credential",
+     "Digital signature / e-signature configuration"
+    ]
+   },
+   {
+    "id": 16,
+    "name": "DevOps and software supply chain",
+    "group": "C. Not tied to one device",
+    "ex": "Code repos, CI/CD pipelines, artifacts, IaC, environments, observability",
+    "assets": [
+     "Code repository (Git)",
+     "Repository branch / commit / pull request",
+     "CI/CD pipeline / build job / workflow",
+     "Build artefact / package registry",
+     "Code-signing profile / key",
+     "Software bill of materials (SBOM) / supply-chain attestation",
+     "Software dependency / library / package",
+     "Development / test / staging / production environment",
+     "Sandbox / lab environment",
+     "Feature flag / configuration service",
+     "Infrastructure-as-code (IaC) template / module / state file",
+     "Configuration management code (Ansible, Puppet, Chef, DSC)",
+     "Developer tool / IDE licence / plug-in",
+     "Issue tracker / project",
+     "Application performance monitoring / observability workspace",
+     "Monitoring dashboard / alert / metric / synthetic monitor",
+     "Log group / log analytics workspace",
+     "Hardware bill of materials (HBOM)"
+    ]
+   },
+   {
+    "id": 17,
+    "name": "AI and automation",
+    "group": "C. Not tied to one device",
+    "ex": "ML / LLM models, AI agents, MCP servers, RPA bots, low-code apps, integrations",
+    "assets": [
+     "Machine learning model",
+     "Large language model (LLM) / foundation model / fine-tuned model",
+     "AI agent / agentic workflow",
+     "AI application / copilot / chatbot",
+     "Shadow AI application",
+     "Model Context Protocol (MCP) server / tool / connector",
+     "Prompt / system prompt / prompt template",
+     "Training / evaluation dataset / feature store",
+     "Vector index / embedding store / RAG knowledge base",
+     "AI inference endpoint / service",
+     "AI model registry / model card / model version",
+     "AI guardrail / content-filter policy",
+     "AI provider account / AI API key",
+     "AI workload / notebook / ML pipeline / experiment",
+     "Robotic process automation (RPA) bot / workflow",
+     "Low-code / no-code application / automation flow",
+     "Integration / connector / webhook / iPaaS flow"
+    ]
+   },
+   {
+    "id": 18,
+    "name": "Governance, contracts and records",
+    "group": "C. Not tied to one device",
+    "ex": "Policies, contracts, risk and audit records, ITSM records, brand and IP",
+    "assets": [
+     "Policy / standard / guideline document",
+     "Standard operating procedure (SOP) / runbook / playbook",
+     "Contract / SLA / vendor agreement",
+     "Support contract / warranty / maintenance agreement",
+     "Hardware lease / financing record",
+     "Audit report / assessment / risk register entry",
+     "Compliance control / framework / evidence",
+     "Compliance requirement / regulation mapping",
+     "Architecture / network diagram",
+     "Knowledge base / wiki / documentation",
+     "ITSM ticket / incident / problem record",
+     "Change request / release record",
+     "Asset record (asset tag, serial number)",
+     "Asset owner / custodian / cost-centre record",
+     "Site / building / room / rack location record",
+     "Business capability / process mapped to IT",
+     "Security / privacy incident record",
+     "Disaster recovery / business continuity plan",
+     "Training / security awareness programme record",
+     "Employee / contractor profile (people as information assets)",
+     "Staff skills / knowledge (human capital)",
+     "Brand / trademark / logo / digital media asset",
+     "Website / marketing content (digital asset management)",
+     "Patent / copyright / licence agreement",
+     "Cyber insurance policy"
+    ]
+   }
+  ]
+ },
+ {
+  "layer": "Physical",
+  "cats": [
+   {
+    "id": 1,
+    "name": "Server hardware",
+    "group": "A. Owned hardware",
+    "ex": "Rack, tower, blade servers, hyper-converged nodes",
+    "assets": [
+     "Server (physical)",
+     "Blade chassis / enclosure",
+     "Mainframe",
+     "Midrange system (AIX, Solaris, HP-UX, IBM i)",
+     "Hyper-converged infrastructure (HCI) node",
+     "GPU / AI accelerator server",
+     "HPC cluster node",
+     "Edge server / edge computing device",
+     "Server internal components (CPU, RAM, GPU, motherboard, PSU, fans)",
+     "Host bus adapter / network interface card (NIC)",
+     "KVM switch",
+     "Console server / out-of-band management device"
+    ]
+   },
+   {
+    "id": 2,
+    "name": "End-user computers",
+    "group": "A. Owned hardware",
+    "ex": "Desktops, laptops, thin clients, kiosks",
+    "assets": [
+     "Desktop / laptop",
+     "Workstation (engineering, CAD, imaging)",
+     "Thin client / zero client",
+     "Mini PC / single-board computer",
+     "Monitor / display",
+     "Keyboard, mouse and other peripherals",
+     "Docking station / port replicator",
+     "Webcam / headset / microphone",
+     "Smart card reader / biometric reader",
+     "Kiosk / ATM / self-service terminal",
+     "Point-of-sale (POS) terminal",
+     "Payment card terminal / PIN pad"
+    ]
+   },
+   {
+    "id": 3,
+    "name": "Mobile devices",
+    "group": "A. Owned hardware",
+    "ex": "Company phones, tablets, BYOD",
+    "assets": [
+     "Mobile device",
+     "Rugged handheld / mobile computer",
+     "Wearable device (smartwatch, fitness band)",
+     "Smart glasses / AR headset",
+     "VR headset",
+     "SIM card / eSIM",
+     "Two-way radio / walkie-talkie",
+     "E-reader / dedicated digital device",
+     "Employee-owned device (BYOD)",
+     "Contractor / third-party device"
+    ]
+   },
+   {
+    "id": 4,
+    "name": "Network hardware",
+    "group": "A. Owned hardware",
+    "ex": "Routers, switches, hardware load balancers",
+    "assets": [
+     "Router / switch",
+     "Modem (cable, DSL, cellular)",
+     "Cellular router / 4G-5G gateway",
+     "Network gateway / protocol converter",
+     "Media converter / optical transceiver (SFP / QSFP)",
+     "Network TAP / packet broker",
+     "WAN optimizer",
+     "SD-WAN edge appliance",
+     "DNS / DHCP / IPAM appliance",
+     "Time server / GPS NTP clock",
+     "Hardware load balancer / application delivery controller",
+     "Patch panel",
+     "Structured cabling (copper, fibre)",
+     "Patch cable",
+     "Satellite terminal / VSAT",
+     "Microwave / point-to-point radio link"
+    ]
+   },
+   {
+    "id": 5,
+    "name": "Security appliance hardware",
+    "group": "A. Owned hardware",
+    "ex": "Dedicated firewall / IPS / VPN / proxy / WAF boxes",
+    "assets": [
+     "Security appliance (hardware)",
+     "Hardware security module (HSM)",
+     "Smart card / security token / FIDO hardware key",
+     "Trusted platform module (TPM) chip"
+    ]
+   },
+   {
+    "id": 6,
+    "name": "Wireless hardware",
+    "group": "A. Owned hardware",
+    "ex": "Access points, wireless controllers",
+    "assets": [
+     "Wireless access point / controller",
+     "Wireless bridge / mesh node / repeater",
+     "Private 5G / small cell / cellular radio equipment",
+     "Antenna / RF equipment"
+    ]
+   },
+   {
+    "id": 7,
+    "name": "Storage hardware",
+    "group": "A. Owned hardware",
+    "ex": "NAS, SAN, tape libraries, backup appliances",
+    "assets": [
+     "Storage array / NAS / tape library",
+     "Hard disk drive (HDD) / solid-state drive (SSD)",
+     "Tape drive",
+     "Virtual tape library appliance",
+     "Storage switch (Fibre Channel)",
+     "Disk array / JBOD enclosure"
+    ]
+   },
+   {
+    "id": 8,
+    "name": "Printers and MFPs",
+    "group": "A. Owned hardware",
+    "ex": "Printers, multifunction devices, scanners",
+    "assets": [
+     "Printer / MFP",
+     "Fax machine",
+     "Plotter / 3D printer",
+     "Label / receipt / barcode printer"
+    ]
+   },
+   {
+    "id": 9,
+    "name": "Communication hardware",
+    "group": "A. Owned hardware",
+    "ex": "IP phones, PBX / voice gateways, conferencing units",
+    "assets": [
+     "IP phone / PBX box / conferencing unit",
+     "Softphone headset / speakerphone",
+     "Audio-visual equipment (amplifier, mixer, speaker)",
+     "Projector",
+     "Interactive whiteboard / smart board",
+     "Digital signage player / display",
+     "Gaming console / media player"
+    ]
+   },
+   {
+    "id": 10,
+    "name": "IoT and OT hardware",
+    "group": "A. Owned hardware",
+    "ex": "IP cameras, NVR boxes, badge readers, HVAC, PLCs, smart TVs",
+    "assets": [
+     "IoT / OT device",
+     "IP camera / CCTV camera",
+     "Network video recorder (NVR) / digital video recorder (DVR)",
+     "Physical access control panel / door controller",
+     "Electronic door lock / badge reader",
+     "Biometric scanner (fingerprint, face, iris)",
+     "Intrusion / fire alarm panel and sensors",
+     "Visitor management kiosk",
+     "Time and attendance terminal",
+     "Smart speaker / digital assistant",
+     "Building management system (BMS / BAS) controller",
+     "IoT sensor / actuator",
+     "IoT gateway",
+     "Smart meter / energy meter",
+     "Smart lighting controller",
+     "Elevator / escalator controller",
+     "Vehicle telematics unit / connected vehicle",
+     "Drone / unmanned aerial system",
+     "Robot / automated guided vehicle (AGV)",
+     "Barcode / RFID scanner",
+     "RFID reader / tag",
+     "Network-connected appliance (vending machine, smart refrigerator)",
+     "Programmable logic controller (PLC)",
+     "Remote terminal unit (RTU)",
+     "Distributed control system (DCS) controller",
+     "Human-machine interface (HMI) panel",
+     "SCADA server / front-end processor",
+     "Safety instrumented system (SIS) controller",
+     "I/O module",
+     "Industrial sensor / transmitter",
+     "Industrial actuator / valve / motor",
+     "Variable frequency drive (VFD)",
+     "Industrial switch / router / firewall",
+     "Industrial gateway / serial device server",
+     "Engineering workstation (OT)",
+     "Historian server (hardware)",
+     "CNC machine / manufacturing equipment",
+     "Intelligent electronic device (IED) / protection relay",
+     "Medical device (infusion pump, patient monitor, ECG)",
+     "Medical imaging equipment (X-ray, CT, MRI, ultrasound, mammography)",
+     "Laboratory / diagnostic equipment",
+     "Medication dispenser / nurse call system",
+     "Pneumatic tube system"
+    ]
+   },
+   {
+    "id": 11,
+    "name": "Facility hardware",
+    "group": "A. Owned hardware",
+    "ex": "UPS, smart PDUs, environmental sensors",
+    "assets": [
+     "UPS / PDU / sensor",
+     "Server rack / cabinet",
+     "Floor PDU / remote power panel / busway",
+     "Battery bank",
+     "Generator",
+     "Automatic transfer switch (ATS)",
+     "Branch circuit / electrical feed",
+     "CRAC / CRAH cooling unit",
+     "In-row / rear-door cooling unit",
+     "Chiller / cooling tower / liquid cooling system",
+     "Hot / cold aisle containment",
+     "Raised floor / cable pathway",
+     "Fire suppression system",
+     "Data centre / server room / network closet / telecom room",
+     "Colocation cage / suite",
+     "Edge site / branch IT room"
+    ]
+   },
+   {
+    "id": 12,
+    "name": "Removable media",
+    "group": "A. Owned hardware",
+    "ex": "USB drives, external disks, backup tapes",
+    "assets": [
+     "Removable media",
+     "Memory card / optical media",
+     "Encrypted USB / secure drive"
+    ]
+   },
+   {
+    "id": 15,
+    "name": "Spares, consumables and accessories",
+    "group": "A. Owned hardware",
+    "ex": "Spare parts, toner, cables, adapters, loaner / leased / retired hardware",
+    "assets": [
+     "Hardware spare parts",
+     "Consumables (toner, cartridges, batteries)",
+     "Accessories (cables, adapters, bags, mounts)",
+     "Test and diagnostic equipment (cable testers, spectrum analysers)",
+     "Lab / development / test hardware",
+     "Leased / rented / loaner hardware",
+     "Decommissioned / retired hardware (e-waste)"
+    ]
+   }
+  ]
+ }
 ];
 
 /* ---------- tree ---------- */
-const W = [150,160,220,280,160,300];
-const H = [48,44,50,64,44,64];
-const GAP = 60, SLOT = 74;
+const W = [150,150,250,330];
+const H = [48,48,48,34];
+const SLOT = [64,64,60,42];
+const GAP = 70;
 const COLX = []; W.reduce((x,w,i) => (COLX[i]=x, x+w+GAP), 0);
 
 const all = [];
@@ -274,30 +865,25 @@ function mk(kind, label, parent, extra) {
   all.push(n);
   return n;
 }
-const root = mk('root', 'Hardware assets', null, {expanded:true});
-DATA.forEach(t => {
-  const tn = mk('type', t.label, root, {type:t.key});
-  t.surfaces.forEach(s => {
-    const sn = mk('surface', s.label, tn);
-    s.chains.forEach(c => {
-      const vn = mk('vuln', c.v, sn, {info:c.extra});
-      const cn = mk('cve', c.cve, vn, {nocve:!!c.nocve, cvss:c.cvss});
-      mk('patch', c.p, cn, {nopatch:!!c.np, report:c.report});
-    });
+const root = mk('root', 'Assets', null, {expanded:true});
+DATA.forEach(l => {
+  const ln = mk('layer', l.layer, root, {type:l.layer.toLowerCase()});
+  l.cats.forEach(c => {
+    const cn = mk('cat', c.name, ln, {cat:c});
+    c.assets.forEach(a => mk('asset', a, cn));
   });
 });
-mk('planned', 'Planned expansion', root, {type:'planned'});
 
 const nodesEl = $('#nodes'), linksEl = $('#links'), vp = $('#vp'), world = $('#world'), panel = $('#panel');
-let selected = null;
+let selected = null, query = '';
 
 function create(n) {
   const el = document.createElement('button');
-  el.className = `node k-${n.kind} t-${n.type || 'root'}` + (n.nopatch ? ' nopatch' : '') + (n.report ? ' has-report' : '');
+  el.className = `node k-${n.kind} t-${n.type || 'root'}`;
   el.style.width = W[n.depth] + 'px';
   el.style.height = H[n.depth] + 'px';
   el.title = n.label;
-  el.innerHTML = `<span class="lbl">${esc(n.label)}</span>` + (n.children.length ? '<span class="tog"></span>' : '') + (n.report ? '<span class="pdf">PDF</span>' : '');
+  el.innerHTML = `<span class="lbl">${esc(n.label)}</span>` + (n.children.length ? '<span class="tog"></span>' : '');
   el.addEventListener('click', () => onNode(n));
   nodesEl.append(el);
   n.el = el;
@@ -312,6 +898,7 @@ function create(n) {
 }
 function badge(n) {
   if (!n.el) return;
+  n.el.classList.toggle('hit', !!query && n.kind === 'asset' && matches(n));
   const t = n.el.querySelector('.tog');
   if (!t) return;
   t.textContent = n.expanded ? '−' : n.children.length;
@@ -327,10 +914,10 @@ function layout() {
     if (n.expanded && n.children.length) {
       n.children.forEach(place);
       n.ty = (n.children[0].ty + n.children[n.children.length-1].ty) / 2;
-      if (n.depth >= 1 && n.depth <= 2) cursor += 16;
+      if (n.depth >= 1) cursor += 14;
     } else {
-      n.ty = cursor + SLOT/2;
-      cursor += SLOT;
+      n.ty = cursor + SLOT[n.depth]/2;
+      cursor += SLOT[n.depth];
     }
   })(root);
   all.forEach(n => {
@@ -394,29 +981,30 @@ function bbox(list) {
 function fit() {
   const r = vp.getBoundingClientRect(), pad = 40, bb = bbox(visibleNodes());
   const aw = r.width - panelInset() - pad*2, ah = r.height - pad*2;
-  const s = Math.max(.3, Math.min(aw / (bb.x1-bb.x0), ah / (bb.y1-bb.y0), 1));
+  const s = Math.max(.12, Math.min(aw / (bb.x1-bb.x0), ah / (bb.y1-bb.y0), 1));
   tview.s = s;
   tview.x = pad + (aw - (bb.x1-bb.x0)*s) / 2 - bb.x0*s;
-  tview.y = pad + (ah - (bb.y1-bb.y0)*s) / 2 - bb.y0*s;
+  tview.y = pad + Math.max(0, (ah - (bb.y1-bb.y0)*s) / 2) - bb.y0*s;
   kick();
 }
 function reveal(list) {
   const r = vp.getBoundingClientRect(), pad = 28, bb = bbox(list), s = tview.s;
   const right = r.width - panelInset() - pad;
-  let L = tview.x + bb.x0*s, R = tview.x + bb.x1*s, T = tview.y + bb.y0*s, B = tview.y + bb.y1*s;
+  const R = tview.x + bb.x1*s, B = tview.y + bb.y1*s;
   if (R > right) tview.x -= R - right;
   if (tview.x + bb.x0*s < pad) tview.x += pad - (tview.x + bb.x0*s);
   if (B > r.height - pad) tview.y -= B - (r.height - pad);
   if (tview.y + bb.y0*s < pad) tview.y += pad - (tview.y + bb.y0*s);
 }
 function zoomAt(cx, cy, f, instant) {
-  const r = vp.getBoundingClientRect(), s2 = Math.min(2, Math.max(.3, tview.s * f));
+  const r = vp.getBoundingClientRect(), s2 = Math.min(2, Math.max(.12, tview.s * f));
   const px = cx - r.left, py = cy - r.top, wx = (px - tview.x) / tview.s, wy = (py - tview.y) / tview.s;
   tview.x = px - wx*s2; tview.y = py - wy*s2; tview.s = s2;
   if (instant) { Object.assign(view, tview); applyView(); } else kick();
 }
 
 vp.addEventListener('wheel', e => {
+  if (e.target.closest('#panel')) return;
   e.preventDefault();
   if (e.ctrlKey || e.metaKey) zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * .01), true);
   else { tview.x -= e.deltaX; tview.y -= e.deltaY; Object.assign(view, tview); applyView(); }
@@ -446,7 +1034,7 @@ function onNode(n) {
   if (n.expanded) collapse(n); else n.expanded = true;
   layout();
   tview.y -= (n.ty - oldTy) * tview.s;
-  if (n.expanded) reveal(subtree(n).filter(m => m.to === 1));
+  if (n.expanded) reveal(subtree(n).filter(m => m.to === 1).slice(0, 40));
   kick();
 }
 $('#expandAll').onclick = () => { all.forEach(n => { if (n.children.length) n.expanded = true; }); layout(); fit(); };
@@ -455,16 +1043,31 @@ $('#fit').onclick = fit;
 const center = () => { const r = vp.getBoundingClientRect(); return [r.left + (r.width - panelInset())/2, r.top + r.height/2]; };
 $('#zoomIn').onclick = () => zoomAt(...center(), 1.25);
 $('#zoomOut').onclick = () => zoomAt(...center(), 1/1.25);
-$('#notes').onclick = () => $('#dlg').showModal();
 addEventListener('keydown', e => { if (e.key === 'Escape' && panel.classList.contains('open')) closePanel(); });
 
+/* ---------- search ---------- */
+const norm = s => s.toLowerCase();
+function matches(n) { return norm(n.label).includes(query) || norm(n.parent.label).includes(query); }
+let qt = 0;
+$('#q').addEventListener('input', e => {
+  clearTimeout(qt);
+  qt = setTimeout(() => {
+    query = norm(e.target.value.trim());
+    root.children.forEach(collapse); root.expanded = true;
+    if (query) {
+      const hits = all.filter(n => n.kind === 'asset' && matches(n));
+      hits.forEach(h => { for (let a = h.parent; a; a = a.parent) a.expanded = true; });
+      $('#count').textContent = `${hits.length} match${hits.length === 1 ? '' : 'es'}`;
+    } else $('#count').textContent = '';
+    layout(); fit();
+  }, 150);
+});
+
 /* ---------- details panel ---------- */
-const STAGE = [0,0,1,2,3,4];
 function select(n) {
   if (selected && selected.el) selected.el.classList.remove('sel');
   selected = n;
   n.el.classList.add('sel');
-  document.querySelectorAll('.stage').forEach((s, i) => s.classList.toggle('on', i === STAGE[n.depth]));
   panel.innerHTML = panelHTML(n);
   panel.scrollTop = 0;
   panel.classList.add('open');
@@ -473,83 +1076,32 @@ function closePanel() {
   panel.classList.remove('open');
   if (selected && selected.el) selected.el.classList.remove('sel');
   selected = null;
-  document.querySelectorAll('.stage').forEach(s => s.classList.remove('on'));
 }
-panel.addEventListener('click', e => {
-  if (e.target.closest('.x')) return closePanel();
-  const b = e.target.closest('.copy');
-  if (b) {
-    const txt = b.parentElement.querySelector('pre').textContent;
-    try { navigator.clipboard.writeText(txt); b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1200); } catch (_) {}
-  }
-});
+panel.addEventListener('click', e => { if (e.target.closest('.x')) closePanel(); });
 
-const code = t => `<div class="pre"><pre>${esc(t)}</pre><button class="copy">Copy</button></div>`;
-const STEP = ['Asset','Attack surface','Vulnerability','CVE','Patch'];
-function chainOf(n) {
-  let v = n; while (v.kind !== 'vuln') v = v.parent;
-  const c = v.children[0], p = c.children[0], s = v.parent, t = s.parent;
-  return [t, s, v, c, p];
-}
-function chainHTML(ch, cur, off = 0) {
-  return '<ol class="chain">' + ch.map((x, i) =>
-    `<li class="st st${i+off}${x === cur ? ' cur' : ''}"><span>${STEP[i+off]}</span><b>${esc(x.label)}</b></li>`).join('') + '</ol>';
-}
-function chainsIn(n) { return subtree(n).filter(m => m.kind === 'patch'); }
-
+const assetsIn = n => subtree(n).filter(m => m.kind === 'asset').length;
 function panelHTML(n) {
-  let h = `<button class="x" aria-label="Close">×</button><div class="kind">${{root:'Root',type:'Asset type',surface:'Attack surface',vuln:'Vulnerability',cve:'CVE',patch:'Patch / remediation',planned:'Planned'}[n.kind]}</div>`;
+  let h = `<button class="x" aria-label="Close">×</button><div class="kind">${{root:'Root',layer:'Layer',cat:'Category',asset:'Asset type'}[n.kind]}</div>`;
   h += `<h2>${esc(n.label)}</h2>`;
   if (n.kind === 'root') {
-    const patches = chainsIn(root);
-    h += `<p>Concept-stage map of the hardware asset tree. Click a node to open the next level; every leaf repeats the same chain: attack surface → vulnerability → CVE → patch.</p>
-      <div class="stats">
-        <div class="stat"><b>${root.children.filter(c => c.kind === 'type').length}</b><span>asset types</span></div>
-        <div class="stat"><b>${all.filter(m => m.kind === 'surface').length}</b><span>attack surfaces</span></div>
-        <div class="stat"><b>${patches.length}</b><span>vulnerability chains</span></div>
-        <div class="stat"><b>${patches.filter(p => p.nopatch).length}</b><span>with no patch (compensating controls)</span></div>
-      </div>`;
-  } else if (n.kind === 'planned') {
-    h += `<p>Later expansion: storage and peripherals, printers, physical security devices. Every leaf repeats the same chain.</p>`;
-  } else if (n.kind === 'type') {
-    h += `<h3>Attack surfaces</h3><ul class="list">` + n.children.map(s =>
-      `<li>${esc(s.label)} <span style="color:var(--muted)">(${s.children.length} chain${s.children.length > 1 ? 's' : ''})</span></li>`).join('') + `</ul>`;
-    const np = chainsIn(n).filter(p => p.nopatch).length;
-    if (np) h += `<div class="callout bad">${np} chain${np > 1 ? 's have' : ' has'} no patch and need${np > 1 ? '' : 's'} compensating controls.</div>`;
-  } else if (n.kind === 'surface') {
-    h += `<h3>${n.children.length} vulnerability chain${n.children.length > 1 ? 's' : ''}</h3>`;
-    n.children.forEach(v => {
-      const c = v.children[0], p = c.children[0];
-      h += chainHTML([v, c, p], null, 2);
-    });
+    h += `<p>Every asset type from the spreadsheet, split into the logical and physical layers, then by category.</p><div class="stats">` +
+      root.children.map(l => `<div class="stat"><b>${l.children.length}</b><span>${esc(l.label)} categories</span></div>`).join('') +
+      root.children.map(l => `<div class="stat"><b>${assetsIn(l)}</b><span>${esc(l.label)} asset types</span></div>`).join('') + `</div>`;
+  } else if (n.kind === 'layer') {
+    h += `<p>${n.children.length} categories · ${assetsIn(n)} asset types</p><h3>Categories</h3><ul class="list">` +
+      n.children.map(c => `<li>${esc(c.label)} <span class="n">(${c.children.length})</span></li>`).join('') + `</ul>`;
+  } else if (n.kind === 'cat') {
+    const c = n.cat;
+    h += `<div class="crumb">${esc(n.parent.label)} · Category ${c.id}</div>
+      <p><span class="tag">${esc(c.group)}</span></p>
+      <h3>Examples</h3><p>${esc(c.ex)}</p>
+      <h3>${n.children.length} asset type${n.children.length === 1 ? '' : 's'}</h3><ul class="list">` +
+      n.children.map(a => `<li>${esc(a.label)}</li>`).join('') + `</ul>`;
   } else {
-    const ch = chainOf(n);
-    h += `<h3>Chain</h3>` + chainHTML(ch, n);
-    if (n.kind === 'cve') {
-      if (n.cvss) h += `<p><b>CVSS ${esc(n.cvss)}</b></p>`;
-      if (n.nocve) h += `<p>No CVE assigned: this is a design weakness of the protocol.</p>`;
-      else h += `<p><a href="https://nvd.nist.gov/vuln/detail/${encodeURIComponent(n.label)}" target="_blank" rel="noopener noreferrer">View ${esc(n.label)} on NVD ↗</a></p>`;
-    }
-    if (n.kind === 'patch' || n.kind === 'cve') {
-      const p = ch[4];
-      h += p.nopatch
-        ? `<div class="callout bad"><b>No patch available.</b> Needs compensating controls.</div>`
-        : `<div class="callout ok"><b>Patch available.</b></div>`;
-    }
-    const rp = ch[4].report;
-    if (rp) {
-      const u = encodeURI(rp);
-      h += `<h3>Patch report</h3><div class="report"><b>${esc(rp)}</b><br><a class="open" href="${u}" target="_blank" rel="noopener">Open full report (PDF) ↗</a><iframe src="${u}#view=FitH" title="${esc(rp)}"></iframe></div>`;
-    }
-    const info = ch[2].info;
-    if (info) {
-      h += `<h3>Affected and fixed versions</h3><p>${esc(info.affected)}</p>
-        <h3>Detect: installed version</h3>${code(info.detect)}
-        <h3>Patch (Debian / Ubuntu)</h3>${code(info.patchDeb)}
-        <h3>Patch (RHEL / Rocky / Alma / Fedora)</h3>${code(info.patchRhel)}
-        <h3>Verify (distros backport fixes, so the version number can look old)</h3>${code(info.verify)}
-        <h3>Finding card</h3><table>${info.card.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</table>`;
-    }
+    const c = n.parent;
+    h += `<div class="crumb">${esc(c.parent.label)} → ${esc(c.label)}</div>
+      <h3>Category group</h3><p><span class="tag">${esc(c.cat.group)}</span></p>
+      <h3>Category examples</h3><p>${esc(c.cat.ex)}</p>`;
   }
   return h;
 }
